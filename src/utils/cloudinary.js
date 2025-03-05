@@ -1,25 +1,40 @@
-import {v2 as cloudinary} from "cloudinary";
+import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
 
 
-cloudinary.config({ 
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
-    api_key: process.env.CLOUDINARY_API_KEY, 
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
 const uploadOnCloudinary = async (localFilePath) => {
     try {
-        if(!localFilePath) return null;
-        const response = await cloudinary.uploader.upload(localFilePath,{
-            resource_type:"auto"
+        if (!localFilePath) return null;
+        const response = await cloudinary.uploader.upload(localFilePath, {
+            resource_type: "auto"
         })
         fs.unlinkSync(localFilePath)
         return response;
     } catch (error) {
-        fs.unlinkSync(localFilePath) // remove the locally saved temporary file as the upload operation got failed
+        // fs.unlinkSync(localFilePath) // remove the locally saved temporary file as the upload operation got failed
         return error
     }
 }
 
-export {uploadOnCloudinary}
+const destroyFileOnCloudinary = async (publicID) => {
+    try {
+        if (!publicID) {
+            throw new Error("Public id is required to delete a file")
+        }
+        const response = await cloudinary.uploader.destroy(publicID)
+        if (!response.result) {
+            throw new Error(`File with public id '${publicID}' not found on Cloudinary`)
+        }
+        return response;
+    } catch (error) {
+        return error;
+    }
+}
+
+export { uploadOnCloudinary, destroyFileOnCloudinary }
